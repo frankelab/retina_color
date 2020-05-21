@@ -1,0 +1,185 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+###Load packages
+
+library(ggplot2)
+library(mgcv)
+library(itsadug)
+library(dplyr)
+library(ggpubr)
+library(lmerTest)
+library(reshape2)
+library(rlang)
+library(afex)
+library(lsmeans)
+library(reshape2)
+```
+
+```{r}
+###Load data bipolar cells
+
+#Load data
+directory_str <- "C:/Users/kfranke/Documents/GitHub/retina_color/Statistics_R/Data/"
+data_str <- "SC.txt"
+data_bc <- read.table(paste(directory_str, data_str, sep = ""), header = FALSE, blank.lines.skip = FALSE, sep = ",", dec = ".")
+colnames(data_bc) <- c('center', 'surround')
+data_bc$cell_id <- rownames(data_bc)
+data_bc <- melt(data_bc)
+
+#Load bin numbers
+data_str <- "BinNumber.txt"
+data_bin <- read.table(paste(directory_str, data_str, sep = ""), header = FALSE, blank.lines.skip = FALSE, sep = ",", dec = ".")
+data_bc$bin_num <- data_bin$V1
+
+data_str <- "BinNumber_str.txt"
+data_bin_str <- read.table(paste(directory_str, data_str, sep = ""), header = FALSE, blank.lines.skip = FALSE, sep = ",", dec = ".")
+data_bc$bin_num_str <- data_bin_str$V1
+
+rownames(data_bc) <- NULL
+colnames(data_bc) <- c('cell_id', 'cent_surr', 'sc', 'bin_num', 'bin_num_str')
+data_bc <- data_bc[complete.cases(data_bc$sc) , ]
+
+```
+
+```{r}
+#Plot data bipolar cells
+
+ggplot(data_bc,aes(x=sc,y=bin_num, color=cent_surr)) +
+  geom_point(alpha=0.3) + 
+  ylim(c(0,7)) +
+  xlim(-2,2)
+```
+
+```{r}
+#Make model SC center and surround
+
+m1 <- lmer(sc ~ cent_surr*bin_num + (1|cell_id), data = data_bc)
+summary(m1)
+anova(m1)
+
+```
+
+```{r}
+
+comps <- contrast(ref,method="pairwise")
+summary(comps)
+
+```
+
+
+```{r}
+###Load data SC center and surround RGC
+
+#Load data
+directory_str <- "C:/Users/kfranke/Documents/GitHub/retina_color/Statistics_R/Data/"
+data_str <- "RGC_SC.txt"
+data_rgc_sc <- read.table(paste(directory_str, data_str, sep = ""), header = FALSE, blank.lines.skip = FALSE, sep = ",", dec = ".")
+colnames(data_rgc_sc) <- c('center', 'surround')
+data_rgc_sc$cell_id <- rownames(data_rgc_sc)
+data_rgc_sc <- melt(data_rgc_sc)
+
+#Load bin numbers
+data_str <- "RGC_BinNumber.txt"
+data_bin <- read.table(paste(directory_str, data_str, sep = ""), header = FALSE, blank.lines.skip = FALSE, sep = ",", dec = ".")
+data_rgc_sc$bin_num <- data_bin$V1
+
+data_str <- "RGC_BinNumber_str.txt"
+data_bin_str <- read.table(paste(directory_str, data_str, sep = ""), header = FALSE, blank.lines.skip = FALSE, sep = ",", dec = ".")
+data_rgc_sc$bin_num_str <- data_bin_str$V1
+
+rownames(data_rgc_sc) <- NULL
+colnames(data_rgc_sc) <- c('cell_id', 'cent_surr', 'sc', 'bin_num', 'bin_num_str')
+data_rgc_sc <- data_rgc_sc[complete.cases(data_rgc_sc$sc) & complete.cases(data_rgc_sc$bin_num),]
+```
+
+```{r}
+#Plot data SC center and surround RGC
+
+ggplot(data_rgc_sc,aes(x=sc,y=bin_num, color=cent_surr)) +
+  geom_point(alpha=0.3) + 
+  ylim(c(0,7)) +
+  xlim(-2,2)
+```
+
+```{r}
+#Make model SC center and surround RGC
+
+m3 <- lmer(sc ~ cent_surr * bin_num + (1|cell_id), data = data_rgc_sc)
+summary(m3)
+anova(m3)
+```
+
+```{r}
+
+emm_options(pbkrtest.limit = 10804)
+emm_options(lmerTest.limit = 10804)
+m3 <- lmer(sc ~ cent_surr*bin_num_str + (1|cell_id), data = data_rgc_sc)
+ref <- lsmeans(m3,~cent_surr|bin_num_str)
+
+```
+
+
+```{r}
+
+comps <- contrast(ref,method="pairwise")
+summary(comps)
+
+```
+
+```{r}
+#Load data cones dorsal
+
+directory_str <- "C:/Users/kfranke/Documents/GitHub/retina_color/Statistics_R/Data/"
+data_str <- "SC_D.txt"
+data_D <- read.table(paste(directory_str, data_str, sep = ""), header = FALSE, blank.lines.skip = FALSE, sep = ",", dec = ".")
+colnames(data_D) <- c('center', 'surround')
+data_D <- data_D[complete.cases(data_D$center) | complete.cases(data_D$surround) , ]
+rownames(data_D) <- NULL
+data_D$cell_id <- rownames(data_D)
+data_D <- melt(data_D)
+colnames(data_D) <- c('cell_id', 'cent_surr', 'bg_pref')
+```
+
+```{r}
+#Make model dorsal data
+
+m1 <- lmer(bg_pref ~ cent_surr + (1|cell_id), data = data_D)
+summary(m1)
+anova(m1)
+```
+
+```{r}
+#Load ventral data
+
+directory_str <- "C:/Users/kfranke/Documents/GitHub/retina_color/Statistics_R/Data/"
+data_str <- "SC_V.txt"
+data_V <- read.table(paste(directory_str, data_str, sep = ""), header = FALSE, blank.lines.skip = FALSE, sep = ",", dec = ".")
+colnames(data_V) <- c('center', 'surround')
+data_V <- data_V[complete.cases(data_V$center) | complete.cases(data_V$surround) , ]
+rownames(data_V) <- NULL
+data_V$cell_id <- rownames(data_V)
+data_V <- melt(data_V)
+colnames(data_V) <- c('cell_id', 'cent_surr', 'bg_pref')
+```
+
+```{r}
+#Make model ventral data
+
+m2 <- lmer(bg_pref ~ cent_surr + (1|cell_id), data = data_V)
+summary(m2)
+anova(m2)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.

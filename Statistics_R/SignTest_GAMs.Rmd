@@ -1,0 +1,217 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+###Load packages
+
+library(ggplot2)
+library(mgcv)
+library(itsadug)
+library(dplyr)
+library(ggpubr)
+library(lmerTest)
+library(reshape2)
+```
+
+```{r}
+###Load data chromatic preference
+
+#Load data from dorsal retina
+directory_str <- "C:/Users/kfranke/Documents/GitHub/retina_color/Statistics_R/Data/"
+data_str <- "Kernels_BGi_Diff_D.txt"
+data_D <- read.table(paste(directory_str, data_str, sep = ""), header = FALSE, blank.lines.skip = FALSE, sep = ",", dec = ".")
+colnames(data_D) <- c('SC_Diff', 'Depth')
+data_D$dv <- "D"
+#Load data from ventral retina
+data_str <- "Kernels_BGi_Diff_V.txt"
+data_V <- read.table(paste(directory_str, data_str, sep = ""), header = FALSE, blank.lines.skip = FALSE, sep = ",", dec = ".")
+colnames(data_V) <- c('SC_Diff', 'Depth')
+data_V$dv <- "V"
+#Load experiment ID
+data_str <- "ExperimentNumber.txt"
+data_Exp <- read.table(paste(directory_str, data_str, sep = ""), header = FALSE, blank.lines.skip = FALSE, sep = ",", dec = ".")
+data_D$exp_num <- data_Exp$V1
+data_V$exp_num <- data_Exp$V1
+#Combine data
+data <- rbind(data_D,data_V)
+data$dv <- factor(data$dv)
+#data$exp <- factor(data$exp)
+data <- filter(data,!is.na(data$SC_Diff))
+```
+
+```{r}
+###Plot data chromatic preference
+
+ggplot(data,aes(x=Depth,y=SC_Diff,color=dv)) +
+  geom_point(alpha=0.3) + 
+  geom_smooth() +
+  ylim(c(-1,3))
+```
+
+```{r}
+###Make GAM chromatic preference
+
+m1 <- gam(SC_Diff ~ s(Depth, by=dv, k=20) + dv + s(exp_num, bs="re"), data = data)
+summary(m1)
+gam.check(m1)
+```
+
+```{r}
+###Plot model fit chromatic preference
+
+plot_smooth(m1, view="Depth", plot_all = "dv")
+```
+
+
+```{r}
+###Load data opponency onset
+
+#Load ventral data
+directory_str <- "C:/Users/kfranke/Documents/GitHub/retina_color/Statistics_R/Data/"
+data_str <- "Events_Opponency_V.txt"
+data_opponency_V <- read.table(paste(directory_str, data_str, sep = ""), header = FALSE, blank.lines.skip = FALSE, sep = ",", dec = ".")
+colnames(data_opponency_V) <- c('Opponency', 'Depth')
+data_opponency_V$dv <- "V"
+#Load dorsal data
+data_str <- "Events_Opponency_D.txt"
+data_opponency_D <- read.table(paste(directory_str, data_str, sep = ""), header = FALSE, blank.lines.skip = FALSE, sep = ",", dec = ".")
+colnames(data_opponency_D) <- c('Opponency', 'Depth')
+data_opponency_D$dv <- "D"
+#Load experiment ID
+data_str <- "ExperimentNumber.txt"
+data_Exp <- read.table(paste(directory_str, data_str, sep = ""), header = FALSE, blank.lines.skip = FALSE, sep = ",", dec = ".")
+data_opponency_D$exp_num <- data_Exp$V1
+data_opponency_V$exp_num <- data_Exp$V1
+#Combine data
+data_opponency <- rbind(data_opponency_V,data_opponency_D)
+data_opponency$dv <- factor(data_opponency$dv)
+data_opponency <- filter(data_opponency,!is.na(data_opponency$Opponency))
+```
+
+```{r}
+###Plot data opponency
+
+ggplot(data_opponency,aes(x=Depth,y=Opponency,color=dv)) +
+  geom_point(alpha=0.3) +
+  ylim(c(-1,3))
+```
+
+```{r}
+###Make GAM opponency
+
+m2 <- gam(Opponency ~ s(Depth, by=dv, k=20) + dv + s(exp_num, bs="re"), data = data_opponency, family = binomial)
+summary(m2)
+gam.check(m2)
+```
+
+```{r}
+###Plot model fit opponency
+
+plot_smooth(m2, view="Depth", plot_all = "dv")
+```
+
+```{r}
+###Load data opponency offset
+
+#Load ventral data
+directory_str <- "C:/Users/kfranke/Documents/GitHub/retina_color/Statistics_R/Data/"
+data_str <- "Events_Off_Opponency_V.txt"
+data_opponency_V <- read.table(paste(directory_str, data_str, sep = ""), header = FALSE, blank.lines.skip = FALSE, sep = ",", dec = ".")
+colnames(data_opponency_V) <- c('Opponency', 'Depth')
+data_opponency_V$dv <- "V"
+#Load dorsal data
+data_str <- "Events_Off_Opponency_D.txt"
+data_opponency_D <- read.table(paste(directory_str, data_str, sep = ""), header = FALSE, blank.lines.skip = FALSE, sep = ",", dec = ".")
+colnames(data_opponency_D) <- c('Opponency', 'Depth')
+data_opponency_D$dv <- "D"
+#Load experiment ID
+data_str <- "ExperimentNumber.txt"
+data_Exp <- read.table(paste(directory_str, data_str, sep = ""), header = FALSE, blank.lines.skip = FALSE, sep = ",", dec = ".")
+data_opponency_D$exp_num <- data_Exp$V1
+data_opponency_V$exp_num <- data_Exp$V1
+#Combine data
+data_opponency <- rbind(data_opponency_V,data_opponency_D)
+data_opponency$dv <- factor(data_opponency$dv)
+data_opponency <- filter(data_opponency,!is.na(data_opponency$Opponency))
+```
+
+```{r}
+###Plot data opponency
+
+ggplot(data_opponency,aes(x=Depth,y=Opponency,color=dv)) +
+  geom_point(alpha=0.3) +
+  ylim(c(-1,3))
+```
+
+```{r}
+###Make GAM opponency
+
+m2 <- gam(Opponency ~ s(Depth, by=dv, k=20) + dv + s(exp_num, bs="re"), data = data_opponency, family = binomial)
+summary(m2)
+gam.check(m2)
+```
+
+
+```{r}
+###Load data center chromatic preference
+
+#Load ventral data
+directory_str <- "C:/Users/kfranke/Documents/GitHub/retina_color/Statistics_R/Data/"
+data_str <- "SC_Center_V.txt"
+data_center_V <- read.table(paste(directory_str, data_str, sep = ""), header = FALSE, blank.lines.skip = FALSE, sep = ",", dec = ".")
+colnames(data_center_V) <- c('SC_Center', 'Depth')
+data_center_V$dv <- "V"
+#Load dorsal data
+data_str <- "SC_Center_D.txt"
+data_center_D <- read.table(paste(directory_str, data_str, sep = ""), header = FALSE, blank.lines.skip = FALSE, sep = ",", dec = ".")
+colnames(data_center_D) <- c('SC_Center', 'Depth')
+data_center_D$dv <- "D"
+#Load experiment ID
+data_str <- "ExperimentNumber.txt"
+data_Exp <- read.table(paste(directory_str, data_str, sep = ""), header = FALSE, blank.lines.skip = FALSE, sep = ",", dec = ".")
+data_center_D$exp_num <- data_Exp$V1
+data_center_V$exp_num <- data_Exp$V1
+#Combine data
+data_center <- rbind(data_center_V,data_center_D)
+data_center$dv <- factor(data_center$dv)
+data_center <- filter(data_center,!is.na(data_center$SC_Center))
+```
+
+```{r}
+###Plot data center chromatic preference
+
+ggplot(data_center,aes(x=Depth,y=SC_Center,color=dv)) +
+  geom_point(alpha=0.3) +
+  ylim(c(-1,3))
+```
+
+```{r}
+###Make GAM center chromatic preference
+
+m3 <- gam(SC_Center ~ s(Depth, by=dv, k=20) + dv + s(exp_num, bs="re"), data = data_center)
+summary(m3)
+gam.check(m3)
+
+
+
+```
+
+```{r}
+###Plot model fit center chromatic preference
+
+plot_smooth(m3, view="Depth", plot_all = "dv")
+```
+
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
